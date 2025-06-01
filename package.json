@@ -1,0 +1,23 @@
+{
+  "name": "devcommunity-be",
+  "version": "1.0.0",
+  "description": "dev community",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": [
+    "node",
+    "js",
+    "javascript",
+    "backend",
+    "exprees",
+    "mongoDb"
+  ],
+  "author": "Rushikesh pawar",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
