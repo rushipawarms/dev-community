@@ -160,15 +160,48 @@ app.get('/test2', (req, res, next) => {
 // })
 
 // rigth way to organize code
-const {adminAuth} = require('./middlewares/auth')
+const { adminAuth } = require('./middlewares/auth')
 
-app.use('/admin',adminAuth)
+app.use('/admin', adminAuth)
 
 app.get('/admin/getData', (req, res) => {
   res.send("user data send")
 })
 app.get('/admin/deleteData', (req, res) => {
   res.send("delete data")
+})
+
+//error handling
+
+//if write error handler initially , then it will not catch error
+
+// app.use('/', (err, req, res, next) => {
+//   if (err) {
+//     res.status(500).send("Something went wrong")
+//   }
+// })
+
+app.get('/getUserData', (req, res, next) => {
+  throw new Error("Error Occures")
+  res.send("send user data")
+})
+
+app.use('/', (err, req, res, next) => {
+  if (err) {
+    res.status(500).send("Something went wrong")
+  }
+})
+
+//we can also handle error in try and catch block
+
+app.get('/getUserData1', (req, res, next) => {
+  try {
+    throw new Error("Error Occures")
+    //res.send("send user data")
+  }
+  catch(err){
+    res.status(500).send("Something went wrong1")
+  }
 })
 
 
