@@ -34,7 +34,7 @@ app.delete('/delete-photo', (req, res) => {
   res.send("deleted");
 });
 
-app.get('/test', (req, res)=>{
+app.get('/test', (req, res) => {
   res.send("test successfull")
 })
 
@@ -45,7 +45,7 @@ app.get('/test', (req, res)=>{
 
 // b is optional here
 app.get(/^\/ab?cd$/, (req, res) => {
-  res.send('optional test','acd or abcd');
+  res.send('optional test', 'acd or abcd');
 });
 
 // you add anything between xy and z but xy z must be there
@@ -69,7 +69,7 @@ app.get(/.*fly$/, (req, res) => {
 })
 
 //regex to match URL path that contains rushi anywhere
-app.get(/.*rushi.*/,(req, res) => {
+app.get(/.*rushi.*/, (req, res) => {
   res.send('/.*rushi.*/')
 })
 
@@ -80,9 +80,96 @@ app.get('/user/:userId', (req, res) => {
 
 //query param
 app.get('/user', (req, res) => {
-  const {name, id} = req.query
+  const { name, id } = req.query
   res.send(`${name},${id}`);
 });
+
+//route handler explaination
+app.get('/test1',
+
+  [(req, res, next) => {
+    console.log("first handler")
+    res.send("first handler")
+    //res.send("first handler")
+    next()
+  },
+  (req, res, next) => {
+    console.log("2nd handler")
+    //gettting error , send 2nd responce  in same route
+    res.send("2nd handler")
+    //next()
+  },
+  [(req, res, next) => {
+    console.log("3rd handler")
+    //gettting error , send 2nd responce  in same route
+    //next()
+    res.send("3rd handler")
+  }],
+  (req, res, next) => {
+    console.log("4th handler")
+    //gettting error , send 2nd responce  in same route
+    res.send("4th handler")
+    //next()
+  }]
+)
+
+app.get('/test2', (req, res, next) => {
+  console.log("1st route")
+  //res.send("1st route")
+  next()
+})
+
+app.get('/test2', (req, res, next) => {
+  console.log("2nd route")
+  res.send("2nd route")
+  //next()
+})
+//middlerware concept
+// app.get('/admin/getData',(req,res,next)=>{
+//   const token= 'xyz';
+//   const isAdmin = token==='xyz1';
+//   if(isAdmin){
+//     res.send("user data send")
+//   }
+//   else{
+//     res.status(401).send("Unauthorized request")
+//   }
+// })
+
+// app.get('/admin/deleteData',(req,res,next)=>{
+//   const token= 'xyz';
+//   const isAdmin = token==='xyz';
+//   if(isAdmin){
+//     res.send("delete data")
+//   }
+//   else{
+//     res.status(401).send("Unauthorized request")
+//   }
+// })
+
+//but here is route middlerware we used
+// app.use('/admin', (req, res, next) => {
+//   const token = 'xyz';
+//   const isAdmin = token === 'xyz';
+//   if (isAdmin) {
+//     next()
+//   }
+//   else {
+//     res.status(401).send("Unauthorized request")
+//   }
+// })
+
+// rigth way to organize code
+const {adminAuth} = require('./middlewares/auth')
+
+app.use('/admin',adminAuth)
+
+app.get('/admin/getData', (req, res) => {
+  res.send("user data send")
+})
+app.get('/admin/deleteData', (req, res) => {
+  res.send("delete data")
+})
 
 
 app.listen(3000, () => {
