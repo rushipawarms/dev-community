@@ -8,16 +8,15 @@ const User = require('./model/user')
 
 const app = express();
 
-app.post('/signup', async(req, res) => {
- try{ const user = new User({
-    firstName:"Sachin",
-    lastName:"Tendulakar",
-    email:"rushikesh.pawar@gmail.com",
-    password :"abcd@1234",
-  })
-  await user.save()
-  res.status(200).send("data saved in Db")}
-  catch(err){
+app.use(express.json())
+
+app.post('/signup', async (req, res) => {
+  try {
+    const user = new User(req.body)
+    await user.save()
+    res.status(200).send("data saved in Db")
+  }
+  catch (err) {
     res.status(500).send("data not saved in Db,Something went wrong")
   }
 })
@@ -30,7 +29,7 @@ connectDb()
     });
   })
   .catch((err) => {
-     console.error(err); 
+    console.error(err);
     console.log("Failed to Connect DB...")
   })
 
