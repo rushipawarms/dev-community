@@ -6,22 +6,63 @@ const connectDb = require('./config/database')
 
 const User = require('./model/user')
 
+const { validateSignUpData, isUpdate } = require('./utils/validation')
+
+const bcrypt = require('bcrypt')
+
 const app = express();
 
 app.use(express.json())
 
 app.post('/signup', async (req, res) => {
   try {
-    const user = new User(req.body)
+    validateSignUpData(req)
+    const { firstName, lastName, email, password, age, gender, skills } = req.body
+    const passwordHash = await bcrypt.hash(password, 10)
+    const user = new User(
+      {
+        firstName,
+        lastName,
+        email,
+        password: passwordHash,
+        age,
+        gender,
+        skills
+      }
+    )
     await user.save({
-        runValidators: true
-      })
+      runValidators: true
+    })
     res.status(200).send("data saved in Db")
   }
   catch (err) {
     res.status(500).send(err.message)
   }
 })
+
+//login API
+app.post('/login', async (req, res) => {
+  try {
+    const data = req.body
+    if (!isUpdate(data)) {
+      throw new Error("Not a valid fields")
+    }
+    const user = await User.findOne({ email: data.email })
+    if (!user) {
+      throw new Error("Invalid Credentials")
+    }
+    const isPasswordValid = await bcrypt.compare(data?.password, user?.password)
+    if (isPasswordValid) {
+      res.send("Login Succesfully")
+    } else {
+      throw new Error("Invalid Credentials")
+    }
+  }
+  catch (err) {
+    res.status(500).send(err.message)
+  }
+})
+
 //get user by email
 app.get('/user', async (req, res) => {
   try {
