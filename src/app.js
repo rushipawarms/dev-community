@@ -13,11 +13,13 @@ app.use(express.json())
 app.post('/signup', async (req, res) => {
   try {
     const user = new User(req.body)
-    await user.save()
+    await user.save({
+        runValidators: true
+      })
     res.status(200).send("data saved in Db")
   }
   catch (err) {
-    res.status(500).send("data not saved in Db,Something went wrong")
+    res.status(500).send(err.message)
   }
 })
 //get user by email
@@ -57,15 +59,29 @@ app.delete('/user', async (req, res) => {
 
 //update record by Id
 
-app.patch('/user', async (req, res) => {
+app.patch('/user/:userId', async (req, res) => {
   try {
-    const userId = req.body.userId
-    const firstName = req.body.firstName
-    const lastName = req.body.lastName
-    const data = {
-      firstName, lastName
+    //const userId = req.body.userId
+    const userId = req.params?.userId
+    const data = req.body
+    const ALLOWED_UPDATE = ['firstName', 'lastName', 'password', 'age', 'gender', 'skills']
+    const isUpdate = Object.keys(data).every((k) => ALLOWED_UPDATE.includes(k))
+    if (!isUpdate) {
+      throw new Error("Update not allowed")
     }
-    const user = await User.findByIdAndUpdate(userId, data, { returnDocument: "after" })
+    if (data?.skills.length > 0) {
+      throw new Error("Skills should not be greater than 10")
+    }
+    // const firstName = req.body.firstName
+    // const lastName = req.body.lastName
+    // const data = {
+    //   firstName, lastName
+    // }
+    const user = await User.findByIdAndUpdate(userId, data,
+      {
+        returnDocument: "after",
+        runValidators: true
+      },)
     console.log(user)
     res.send("user updated successfully")
   }
