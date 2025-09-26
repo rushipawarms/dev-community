@@ -1,50 +1,22 @@
 const express = require("express");
 const profileRouter = express.Router();
-const User = require("../model/user");
+const bcrypt = require("bcrypt");
 const { adminAuth } = require("../middlewares/auth");
 
-profileRouter.get("/profile", adminAuth, async (req, res) => {
+
+profileRouter.get("/profile/view", adminAuth, async (req, res) => {
   try {
-    user = req.user;
+    const user = req.user;
     res.send(user);
   } catch (err) {
     res.status(400).send(err.message);
   }
 });
 
-//get user by email
-profileRouter.get("/user", async (req, res) => {
+profileRouter.patch("/profile/edit", adminAuth, async (req, res) => {
   try {
-    const email = req.body.email;
-    const firstName = req.body.firstName;
-    const user = await User.findOne({ email: email });
-    if (user) {
-      res.send(user);
-    } else {
-      res.send("User not found");
-    }
-  } catch (err) {
-    res.send("Somthing went wrong");
-  }
-});
-
-//delete record by Id
-profileRouter.delete("/user", async (req, res) => {
-  try {
-    const userId = req.body.userId;
-    const user = await User.findByIdAndDelete(userId);
-    console.log(user);
-    res.send("user deleted");
-  } catch (err) {
-    res.status(500).send("Somthing went wrong");
-  }
-});
-
-//update record by Id
-profileRouter.patch("/user/:userId", async (req, res) => {
-  try {
-    const userId = req.params?.userId;
     const data = req.body;
+    const logedInUser = req.user;
     const ALLOWED_UPDATE = [
       "firstName",
       "lastName",
@@ -57,17 +29,37 @@ profileRouter.patch("/user/:userId", async (req, res) => {
     if (!isUpdate) {
       throw new Error("Update not allowed");
     }
-    if (data?.skills?.length > 0) {
+    if (data?.skills?.length > 10) {
       throw new Error("Skills should not be greater than 10");
     }
-    const user = await User.findByIdAndUpdate(userId, data, {
-      returnDocument: "after",
-      runValidators: true,
+    Object.keys(data).every((k) => (logedInUser[k] = data[k]));
+    await logedInUser.save();
+    res.json({
+      message: `${logedInUser?.firstName}, your profile is updated`,
+      data: logedInUser,
     });
-    console.log(user);
-    res.send("user updated successfully");
   } catch (err) {
-    res.status(500).send(err.message);
+    res.status(400).send(err.message);
+  }
+});
+
+profileRouter.patch("/profile/password", adminAuth, async (req, res) => {
+  try {
+    const data = req.body;
+    const logedInUser = req.user;
+    const passwordHash = await bcrypt.hash(data?.password, 10);
+    const isPasswordValid = await logedInUser.validatePassword(data?.oldpassword);
+    if(!isPasswordValid){
+        throw new Error("Invalid password");
+    }
+    logedInUser.password = passwordHash
+    await logedInUser.save();
+    res.json({
+      message: `${logedInUser?.firstName}, your password is updated`,
+      data: logedInUser,
+    });
+  } catch (err) {
+    res.status(400).send(err.message);
   }
 });
 
